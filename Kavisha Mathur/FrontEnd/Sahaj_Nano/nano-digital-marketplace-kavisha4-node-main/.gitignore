@@ -1,0 +1,13 @@
+# IDE
+.idea/
+
+# Build files
+build/
+bin/
+*.out
+
+# Build tools/dependencies
+.gradle/
+node_modules
+digital-marketplace/
+data.json
