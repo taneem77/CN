@@ -27,3 +27,7 @@ Interpretation: The first packet (icmp_seq=1) took 18.7 ms, which is significant
 Screenshot 1: Mininet terminal showing net topology and ping results with 0% loss. 
 Screenshot 2: POX console logs showing [PACKET LOGGED BY TANMAYI - 493] with MAC/IP details.
 
+
+<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_50_53" src="https://github.com/user-attachments/assets/02611fce-6918-4dbe-a26b-0a7167a1f92f" />
+
+
