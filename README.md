@@ -1,8 +1,3 @@
-I see exactly what is happening—the Markdown is breaking because the code block isn't being closed properly before the next section starts, and those `<br>` tags are being treated as plain text instead of formatting.
-
-Here is the **final, fixed version**. I have stripped out the manual `<br>` tags that were causing the mess and used **proper Markdown headers and double-spacing** to ensure GitHub renders it perfectly.
-
-***
 
 # Remote Device Control & Monitoring System
 ### Project #24 — TCP/IP Socket-Based IoT Infrastructure
