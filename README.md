@@ -78,3 +78,14 @@ The POX console confirms that the `logger.py` application is successfully parsin
 <img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_51_31" src="https://github.com/user-attachments/assets/e7b89a32-0479-45a0-95a6-d9fe9b90e023" />
 
 
+## 5. Conclusion
+
+This project successfully demonstrates the core principles of Software-Defined Networking by decoupling the control plane from the data plane. Through the implementation of the logger.py controller application, we achieved:
+
+Centralized Visibility: Real-time logging of MAC and IP headers for all network transactions.
+
+Reactive Flow Management: Observation of how the first packet triggers a Packet_In event to establish forwarding rules, while subsequent packets are handled efficiently by the switch.
+
+Functional Integrity: Maintaining a stable network environment with 0% packet loss across a multi-host topology.
+
+The results validate that SDN provides superior programmability and monitoring capabilities compared to traditional, hardware-integrated networking architectures.
