@@ -12,13 +12,26 @@
 ---
 
 ## 2. Project Objectives
-The objective of this system is to establish a high-reliability, full-duplex communication bridge between an **Edge IoT Device** and a **Central Controller**. 
+The objective of this system is to establish a high-reliability, full-duplex communication bridge between an Edge IoT Device and a Central Controller.
 
-By utilizing raw TCP/IP sockets, the project demonstrates a "zero-middleware" approach to industrial monitoring, specifically focusing on **Fault Tolerance**, **Hardware Longevity**, and **Resilient Design**.
+By utilizing raw TCP/IP sockets, the project demonstrates a "zero-middleware" approach to industrial monitoring, specifically focusing on Fault Tolerance, Hardware Longevity, and Resilient Design.
 
 ---
 
-## 3. Environment & Topology
+
+## 3. Interactive Dashboard (index.html)
+The core of this submission is the web-based monitoring interface. It provides a real-time visualization of the 6 engineering challenges and the active socket state.
+
+Full System Demo: An integrated script allows for a "One-Click" simulation of all failure and recovery scenarios.
+
+Real-time Diagnostics: Visualizes the Moving-Average filter absorbing EMI spikes and the Watchdog timer tracking cooling efficiency.
+
+Hardware Simulation: Models the relay isolation barrier between low-voltage logic and 230V AC loads.
+
+
+---
+
+## 4. Environment & Topology
 The project architecture emulates a real-world industrial monitoring environment:
 
 * **Controller Node:** A Python-based Server running on `127.0.0.1:65432`.
@@ -37,7 +50,7 @@ python device_mock.py
 
 ---
 
-## 4. Implementation Logic (controller.py)
+## 5. Implementation Logic (controller.py)
 The controller is built using reactive logic in Python. It parses incoming packets and maintains safety state variables (lockouts, averages, and timestamps) to protect the physical hardware.
 
 ```python
@@ -64,7 +77,7 @@ def start_smart_controller():
 
 ---
 
-## 5. Detailed Engineering Challenges
+## 6. Detailed Engineering Challenges
 
 ### I. Short-Cycle Protection (Compressor Safety)
 * **The Logic**: We implemented a `SC_LOCKOUT` constant to simulate industrial compressor delay.
@@ -98,7 +111,7 @@ def start_smart_controller():
 
 ---
 
-## 6. Performance Observation & Analysis
+## 7. Performance Observation & Analysis
 
 | Feature | Implementation | Result |
 | :--- | :--- | :--- |
