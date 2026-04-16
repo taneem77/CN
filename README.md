@@ -1,60 +1,68 @@
-Project #5: SDN-Based Packet Logging System
 
-Student Name: Tanmayi Nagabhairava
+# Project #5: SDN-Based Packet Logging and Monitoring
+**Student Name:** Tanmayi Nagabhairava  
+**SRN:** PES1UG24CS493  
+**Course:** Computer Networks - UE24CS252B  
 
-SRN: PES1UG24CS493
+---
 
-Course: Computer Networks - UE24CS252B
+## 1. Project Overview
+This project implements a custom Software-Defined Networking (SDN) application that provides real-time monitoring of network traffic. By leveraging the **POX Controller** and **OpenFlow** protocol, the system intercepts packets to log critical header information (MAC and IP addresses) while ensuring seamless data plane forwarding.
 
+## 2. Environment & Topology
+The network is emulated using **Mininet** with the following configuration:
+* **Controller:** Remote POX Controller (`127.0.0.1:6633`)
+* **Switch:** 1 OpenFlow-enabled Virtual Switch (`s1`)
+* **Hosts:** 3 Virtual Hosts (`h1`, `h2`, `h3`)
+* **Topology Command:**
+  ```bash
+  sudo mn --controller=remote,ip=127.0.0.1 --mac --topo=single,3
+  ```
 
+## 3. Implementation Logic (`logger.py`)
+The controller logic is written in Python using the POX framework. It reactively installs rules and logs traffic as it arrives at the switch.
 
-1. Objective & Problem Understanding
-The goal of this project is to implement a packet-logging SDN controller using POX and Mininet.
+```python
+def _handle_PacketIn (event):
+    packet = event.parsed
+    
+    # --- LOGGING ---
+    print("\n" + "="*30)
+    print(" [PACKET LOGGED BY TANMAYI - 493] ")
+    print(" Source MAC: %s | Dest MAC: %s" % (packet.src, packet.dst))
+    
+    ip_pkt = packet.find('ipv4')
+    if ip_pkt:
+        print(" Protocol: IPv4 | Src IP: %s | Dst IP: %s" % (ip_pkt.srcip, ip_pkt.dstip))
+    print("="*30)
 
-Interception: The controller intercepts packet_in events to parse header information.
+    # --- FORWARDING LOGIC ---
+    msg = of.ofp_packet_out()
+    msg.data = event.ofp
+    msg.actions.append(of.ofp_action_output(port = of.OFPP_FLOOD))
+    event.connection.send(msg)
+```
 
-Monitoring: It logs MAC and IP addresses to the console.
+## 4. Performance Observation & Analysis
+The following latency metrics were captured during a 4-packet ICMP connectivity test between `h1` and `h2`:
 
-Connectivity: It maintains network connectivity while logging.
+| Metric | Result |
+| :--- | :--- |
+| **Connectivity** | 0% Packet Loss |
+| **Minimum RTT** | 3.716 ms |
+| **Average RTT** | **7.866 ms** |
+| **Maximum RTT** | 18.695 ms |
 
-2. Network Topology & Environment
-Following the Mininet Installation Manual:
+### **Observation:**
+The initial packet (`icmp_seq=1`) exhibited a latency of **18.7 ms**, which is significantly higher than subsequent packets (~3.9 ms). 
+* **Theoretical Explanation:** This delay represents the **Reactive Flow Setup** time. Since the switch lacks a flow entry for new traffic, it must encapsulate the packet and query the POX controller via a `packet_in` event. Once the controller provides the `flood` instruction, subsequent packets are handled at wire speed by the switch.
 
-Topology: Single Switch with 3 Hosts (--topo single,3).
+## 5. Proof of Execution
+### **A. Network Topology & Connectivity**
+The `net` and `nodes` commands verify the successful creation of the 3-host topology, followed by a successful ping test.
+> *[Drag and drop your Screenshot 1 here]*
 
-Controller: Remote POX Controller.
-
-Justification: This setup allows for clear observation of how the controller handles multi-host traffic and ARP/IP flows.
-
-3. SDN Logic & Implementation
-Packet_In Handling: The logger.py script listens for OpenFlow PacketIn events.
-
-Match-Action Logic: The script extracts Source/Destination MACs and IPs.
-
-Functional Correctness: A flood action is sent back to the switch to permit forwarding.
-
-Code Location: pox/ext/logger.py
-
-4. Performance Observation & Analysis
-Based on the functional demo captured in the screenshots:
-
-Connectivity: Successfully achieved 0% packet loss during h1 ping h2.
-
-Latency (RTT): Min/Avg/Max: 3.716 / 7.866 / 18.695 ms.
-
-Interpretation: The first packet (icmp_seq=1) took 18.7 ms, which is significantly higher than subsequent packets (~3.9 ms).
-
-Technical Reason: The first packet triggered a packet_in event to the controller, while subsequent packets were handled by the switch's flow rules.
-
-5. Proof of Execution (Screenshots)
-Screenshot 1: Mininet terminal showing net topology and ping results with 0% loss.
-
-Screenshot 2: POX console logs showing [PACKET LOGGED BY TANMAYI - 493] with MAC/IP details.
-
-<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_50_53" src="https://github.com/user-attachments/assets/fbb58dd0-9e19-41ee-98dc-3f6d6289fc0f" />
-
-<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_51_12" src="https://github.com/user-attachments/assets/470e5438-237d-4b55-9ec8-db464c28d9c1" />
-
-<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_51_31" src="https://github.com/user-attachments/assets/1e9e56b8-ea84-4b41-9731-76052eb6e397" />
-
+### **B. Controller Monitoring Output**
+The POX console confirms that the `logger.py` application is successfully parsing and logging MAC/IP headers for every transaction.
+> *[Drag and drop your Screenshot 3 here]*
 
