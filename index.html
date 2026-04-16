@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remote Device Control & Monitoring System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <style>
+        :root {
+            --bg: #0d0f14;
+            --surface: #161b25;
+            --surface-hover: #1a2030;
+            --border: #1e2836;
+            --accent: #e8a84c;
+            --accent2: #4c9fe8;
+            --text: #ffffff;
+            --muted: #8892a0;
+            --green: #4ade80;
+            --red: #f87171;
+            --blue: #60a5fa;
+            --orange: #fb923c;
+            --teal: #2dd4bf;
+            --font-main: 'Inter', sans-serif;
+            --font-code: 'JetBrains Mono', monospace;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        html{scroll-behavior:smooth;}
+        body{background-color:var(--bg);color:var(--muted);font-family:var(--font-main);font-size:16px;line-height:1.75;overflow-x:hidden;}
+
+        /* NAV */
+        nav{position:sticky;top:0;height:60px;background:rgba(13,15,20,.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06);z-index:1000;}
+        .nav-content{max-width:1200px;margin:0 auto;padding:0 2rem;height:100%;display:flex;justify-content:space-between;align-items:center;}
+        .nav-logo{display:flex;align-items:center;gap:.75rem;font-weight:600;font-size:18px;color:#fff;}
+        .nav-logo svg{width:20px;height:20px;fill:#fff;}
+        .nav-links{display:flex;gap:1.5rem;}
+        .nav-links a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none;transition:color .2s;}
+        .nav-links a:hover,.nav-links a.active{color:#fff;}
+        .badge{color:var(--accent);font-weight:600;font-size:14px;letter-spacing:.05em;}
+
+        /* DEMO STICKY BAR */
+        .demo-bar {
+            position: sticky;
+            top: 60px;
+            z-index: 999;
+            background: rgba(13,15,20,.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(232,168,76,.15);
+            padding: 10px 2rem;
+            display: none;
+            align-items: center;
+            gap: 16px;
+            justify-content: space-between;
+        }
+        .demo-bar.active { display: flex; }
+        .demo-phase-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 14px;
+            border-radius: 99px;
+            background: rgba(232,168,76,.1);
+            border: 1px solid rgba(232,168,76,.25);
+            color: var(--accent);
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .07em;
+            font-family: var(--font-code);
+        }
+        .demo-phase-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: ripple 1s infinite; }
+        .demo-desc { font-size: 13px; color: var(--muted); flex: 1; padding: 0 16px; }
+        .demo-progress-wrap { display: flex; align-items: center; gap: 10px; }
+        .demo-prog-bg { width: 140px; height: 4px; background: rgba(255,255,255,.06); border-radius: 4px; overflow: hidden; }
+        .demo-prog-fill { height: 100%; background: var(--accent); border-radius: 4px; transition: width .4s; }
+        .demo-step-label { font-family: var(--font-code); font-size: 11px; color: var(--muted); }
+
+        /* LAYOUT */
+        .container{max-width:1200px;margin:0 auto;padding:100px 2rem;}
+        h1,h2,h3,h4,h5,h6{color:#fff;margin:0;padding:0;}
+        .section-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--accent);margin-bottom:8px;font-weight:600;}
+        .section-title{font-size:48px;font-weight:700;line-height:1.1;margin-bottom:16px;}
+        .section-subtitle{font-size:18px;color:var(--muted);max-width:560px;margin-bottom:48px;line-height:1.75;}
+
+        /* CARDS */
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;margin-bottom:12px;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.3);}
+        .card:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.5),0 0 0 1px rgba(232,168,76,.12);}
+        .card-highlight{border-left:3px solid var(--accent);}
+        .card-glass{background:rgba(255,255,255,.03);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.06);}
+        .card h4{font-size:15px;font-weight:600;margin-bottom:12px;color:#fff;}
+        .card p,.card li{font-size:15px;margin-bottom:12px;}
+        .card>*:last-child{margin-bottom:0;}
+
+        /* BUTTONS */
+        .btn{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:10px 24px;border-radius:6px;font-family:var(--font-main);font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .2s ease;outline:none;width:100%;margin-bottom:8px;display:block;}
+        .btn:hover:not(:disabled){background:var(--accent);color:#0d0f14;box-shadow:0 0 20px rgba(232,168,76,.3);}
+        .btn:disabled{opacity:.3;cursor:not-allowed;}
+        .btn-sec{border-color:var(--muted);color:var(--muted);}
+        .btn-sec:hover:not(:disabled){border-color:#f0f4f8;color:#f0f4f8;background:transparent;box-shadow:none;}
+        .btn-inline{width:auto;display:inline-block;padding:7px 16px;margin:0;font-size:11px;}
+        .btn-demo{border-color:var(--accent);color:var(--accent);background:rgba(232,168,76,.08);font-size:12px;}
+        .btn-demo:hover:not(:disabled){background:var(--accent);color:#0d0f14;}
+        .btn-demo.running{border-color:var(--red);color:var(--red);background:rgba(248,113,113,.08);}
+        .btn-demo.running:hover:not(:disabled){background:var(--red);color:#0d0f14;}
+        .btn-orange{border-color:var(--orange);color:var(--orange);}
+        .btn-orange:hover:not(:disabled){background:var(--orange);color:#0d0f14;box-shadow:0 0 20px rgba(251,146,60,.3);}
+        .btn-teal{border-color:var(--teal);color:var(--teal);}
+        .btn-teal:hover:not(:disabled){background:var(--teal);color:#0d0f14;}
+
+        /* HERO */
+        .hero{padding-top:140px;padding-bottom:100px;text-align:center;display:flex;flex-direction:column;align-items:center;}
+        .hero h1{font-size:52px;font-weight:700;line-height:1.1;margin-bottom:16px;color:#fff;max-width:800px;}
+        .hero p.subtitle{font-size:18px;color:var(--muted);margin-bottom:60px;max-width:600px;}
+        .chips-container{display:flex;align-items:center;justify-content:center;gap:0;margin-bottom:60px;}
+        .hero-chip{padding:24px 32px;min-width:260px;text-align:center;}
+        .chip-role{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);margin-bottom:12px;font-weight:600;}
+        .chip-name{font-size:18px;font-weight:600;color:#fff;}
+        .svg-connector{width:120px;height:2px;background:rgba(255,255,255,.1);position:relative;margin:0 24px;}
+        .pulse-dot-anim{position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);animation:shoot 2s infinite ease-out;}
+        @keyframes shoot{0%{left:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{left:100%;opacity:0}}
+        .system-status{display:inline-flex;align-items:center;gap:12px;padding:12px 24px;border-radius:99px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;background:rgba(248,113,113,.05);color:var(--red);border:1px solid rgba(248,113,113,.15);}
+        .system-status.online{background:rgba(74,222,128,.05);color:var(--green);border-color:rgba(74,222,128,.15);}
+        .status-pulse-ring{position:relative;width:10px;height:10px;}
+        .status-dot-core{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:var(--red);}
+        .system-status.online .status-dot-core{background:var(--green);}
+        .status-ring{position:absolute;top:-4px;left:-4px;width:18px;height:18px;border-radius:50%;border:2px solid var(--red);opacity:0;}
+        .system-status.online .status-ring{border-color:var(--green);animation:ripple 2s infinite ease-out;}
+        @keyframes ripple{0%{transform:scale(.5);opacity:1}100%{transform:scale(1.5);opacity:0}}
+
+        /* GRIDS */
+        .intro-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}
+        .three-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;margin-bottom:24px;}
+        ul.styled-list{list-style:none;}
+        ul.styled-list li{position:relative;padding-left:20px;margin-bottom:10px;}
+        ul.styled-list li::before{content:"→";position:absolute;left:0;color:var(--accent);font-family:var(--font-code);font-weight:600;}
+
+        /* ARCH */
+        .arch-diagram-wrap{padding:50px;display:flex;justify-content:center;align-items:center;margin-bottom:24px;}
+        .arch-svg{width:100%;max-width:700px;}
+        .packet-ltr{animation:moveLTR 2.5s ease-in-out infinite;}
+        .packet-rtl{animation:moveRTL 2.5s ease-in-out infinite;}
+        @keyframes moveLTR{0%{transform:translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(300px);opacity:0}}
+        @keyframes moveRTL{0%{transform:translateX(300px);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(0);opacity:0}}
+
+        /* DASHBOARD */
+        .dash-cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px;}
+        .dash-panel{display:flex;flex-direction:column;gap:10px;}
+        .dash-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(255,255,255,.06);padding-bottom:10px;margin-bottom:10px;}
+        .dash-title{font-size:14px;font-weight:600;color:#fff;}
+
+        /* TEMP DISPLAY */
+        .temp-display{text-align:center;padding:12px 0;}
+        .temp-val{font-family:var(--font-code);font-size:44px;font-weight:500;color:#fff;margin-bottom:4px;line-height:1;transition:color .4s;}
+        .temp-val.cold{color:var(--blue);}
+        .temp-val.hot{color:var(--accent);}
+        .temp-val.critical{color:var(--red);}
+        .temp-sub-row{display:flex;justify-content:center;gap:16px;font-size:12px;font-family:var(--font-code);margin-top:8px;}
+        .temp-raw-badge{color:var(--muted);}
+        .temp-filtered-badge{color:var(--green);}
+        .temp-bar-bg{height:5px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;width:85%;margin:8px auto 0;}
+        .temp-bar{height:100%;width:0%;border-radius:4px;transition:width .6s ease,background .4s;}
+        .temp-bar.cold{background:var(--blue);}
+        .temp-bar.normal{background:var(--green);}
+        .temp-bar.hot{background:var(--accent);}
+        .temp-bar.critical{background:var(--red);}
+        .zone-tag{display:flex;justify-content:center;gap:6px;align-items:center;margin-top:8px;font-size:11px;letter-spacing:.06em;font-family:var(--font-code);}
+
+        /* METRICS ROW */
+        .metrics-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.03);font-size:13px;}
+        .metrics-row:last-child{border:none;}
+        .metrics-val{font-family:var(--font-code);color:#fff;font-size:13px;}
+
+        /* LED */
+        .led-indicator{width:16px;height:16px;border-radius:50%;background:#1e2836;transition:all .3s ease;flex-shrink:0;}
+        .led-indicator.on-amber{background:var(--accent);box-shadow:0 0 10px 4px rgba(232,168,76,.5);}
+        .led-indicator.on-blue{background:var(--blue);box-shadow:0 0 10px 4px rgba(96,165,250,.5);}
+        .led-indicator.on-red{background:var(--red);box-shadow:0 0 10px 4px rgba(248,113,113,.5);}
+        .led-indicator.alarm{background:var(--red);animation:alarm-flash .3s infinite alternate;}
+        .led-indicator.maintenance{background:var(--orange);animation:alarm-flash .6s infinite alternate;}
+        @keyframes alarm-flash{from{box-shadow:0 0 6px 2px rgba(248,113,113,.3);opacity:1}to{box-shadow:0 0 20px 8px rgba(248,113,113,.9);opacity:.6}}
+
+        /* HEALTH */
+        .health-wrap{margin:4px 0;}
+        .health-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+        .health-bar-bg{height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+        .health-bar{height:100%;background:var(--green);border-radius:4px;transition:width .6s ease,background .4s;}
+        .health-bar.warn{background:var(--accent);}
+        .health-bar.crit{background:var(--red);animation:health-pulse .7s infinite alternate;}
+        @keyframes health-pulse{from{opacity:1}to{opacity:.4}}
+
+        /* MODE SWITCHER */
+        .mode-switcher{display:flex;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:12px;}
+        .mode-btn{flex:1;padding:9px 6px;background:transparent;border:none;color:var(--muted);font-family:var(--font-main);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s;border-right:1px solid var(--border);}
+        .mode-btn:last-child{border-right:none;}
+        .mode-btn.active{background:var(--accent);color:#0d0f14;}
+        .mode-btn:hover:not(.active){background:rgba(255,255,255,.06);color:#fff;}
+
+        /* THRESHOLDS */
+        .threshold-ctrl{display:none;flex-direction:column;gap:7px;}
+        .threshold-ctrl.visible{display:flex;}
+        .threshold-row{display:flex;align-items:center;gap:8px;font-size:12px;}
+        .threshold-row label{color:var(--muted);min-width:54px;}
+        .threshold-row input[type=range]{flex:1;accent-color:var(--accent);}
+        .threshold-val{font-family:var(--font-code);color:#fff;font-size:11px;min-width:40px;text-align:right;}
+
+        /* SCHEDULE */
+        .schedule-panel{display:none;flex-direction:column;gap:8px;padding:12px;background:rgba(76,159,232,.05);border:1px solid rgba(76,159,232,.15);border-radius:8px;}
+        .schedule-panel.visible{display:flex;}
+        .sched-row{display:flex;gap:8px;align-items:center;font-size:12px;}
+        .sched-label{color:var(--muted);min-width:68px;}
+        .sched-input{background:var(--bg);border:1px solid var(--border);border-radius:4px;color:#fff;font-family:var(--font-code);font-size:12px;padding:4px 8px;width:72px;outline:none;}
+        .sched-input:focus{border-color:var(--accent2);}
+        .sched-sep{color:var(--muted);}
+        .night-active-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:10px;font-weight:600;background:rgba(76,159,232,.12);color:var(--accent2);border:1px solid rgba(76,159,232,.2);letter-spacing:.04em;}
+
+        /* BANNERS */
+        .system-banner{
+            display:none;align-items:center;gap:12px;
+            padding:12px 18px;border-radius:8px;
+            font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+            margin-bottom:12px;animation:banner-in .3s ease;
+        }
+        .system-banner.visible{display:flex;}
+        @keyframes banner-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+        .banner-thermal{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.25);color:var(--red);}
+        .banner-maintenance{background:rgba(251,146,60,.08);border:1px solid rgba(251,146,60,.25);color:var(--orange);}
+        .banner-lockout{background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.25);color:var(--blue);}
+        .banner-power{background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.25);color:var(--teal);}
+        .banner-icon{font-size:16px;}
+        .banner-icon.flash{animation:alarm-flash .4s infinite alternate;}
+
+        /* SHORT CYCLE BADGE */
+        .short-cycle-badge{
+            display:none;align-items:center;gap:8px;
+            padding:6px 14px;border-radius:99px;
+            background:rgba(96,165,250,.1);border:1px solid rgba(96,165,250,.2);
+            color:var(--blue);font-size:11px;font-weight:600;letter-spacing:.05em;font-family:var(--font-code);
+        }
+        .short-cycle-badge.active{display:inline-flex;}
+        .sc-countdown{color:#fff;}
+
+        /* RELAY DIAGRAM */
+        .relay-wrap{padding:16px 0;}
+        .relay-svg{width:100%;}
+
+        /* FAN GAUGE */
+        .fan-gauge-wrap{margin:6px 0;}
+        .fan-gauge-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px;}
+        .fan-stage-pill{padding:2px 10px;border-radius:99px;font-size:10px;font-weight:600;letter-spacing:.06em;background:rgba(255,255,255,.06);color:var(--muted);}
+        .fan-stage-pill.low{background:rgba(74,222,128,.1);color:var(--green);}
+        .fan-stage-pill.medium{background:rgba(232,168,76,.1);color:var(--accent);}
+        .fan-stage-pill.high{background:rgba(251,146,60,.1);color:var(--orange);}
+        .fan-stage-pill.max{background:rgba(248,113,113,.1);color:var(--red);}
+        .fan-segs{display:flex;gap:3px;height:8px;}
+        .fan-seg{flex:1;border-radius:2px;background:rgba(255,255,255,.05);transition:background .4s;}
+        .fan-seg.lit.s-low{background:var(--green);}
+        .fan-seg.lit.s-medium{background:var(--accent);}
+        .fan-seg.lit.s-high{background:var(--orange);}
+        .fan-seg.lit.s-max{background:var(--red);}
+
+        /* MOVING AVERAGE */
+        .ma-wrap{margin:6px 0;}
+        .ma-dots{display:flex;gap:3px;align-items:flex-end;height:32px;}
+        .ma-dot{flex:1;border-radius:2px 2px 0 0;min-height:4px;background:rgba(255,255,255,.08);transition:height .4s,background .4s;}
+        .ma-dot.cold{background:var(--blue);}
+        .ma-dot.normal{background:var(--green);}
+        .ma-dot.hot{background:var(--accent);}
+        .ma-dot.critical{background:var(--red);}
+
+        /* WATCHDOG */
+        .watchdog-wrap{margin:6px 0;}
+        .watchdog-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;}
+        .watchdog-bar-bg{height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden;}
+        .watchdog-bar{height:100%;width:0%;background:var(--teal);border-radius:4px;transition:width 1s linear;}
+        .watchdog-bar.warn{background:var(--orange);}
+        .watchdog-bar.crit{background:var(--red);}
+
+        /* TERMINAL */
+        .terminal-box{background:#090b10;border:1px solid var(--border);border-radius:8px;padding:18px;height:240px;overflow-y:auto;font-family:var(--font-code);font-size:12px;line-height:1.6;color:#a8b4c0;}
+        .terminal-box::-webkit-scrollbar{width:3px;}
+        .terminal-box::-webkit-scrollbar-thumb{background:#2a3040;border-radius:4px;}
+        .log-line{margin-bottom:3px;}
+        .log-ts{color:var(--accent);margin-right:8px;}
+        .log-sys{color:var(--green);margin-right:6px;}
+        .log-warn{color:var(--red);}
+        .log-orange{color:var(--orange);}
+        .log-blue{color:var(--blue);}
+        .log-teal{color:var(--teal);}
+
+        /* CHART */
+        .chart-legend{display:flex;gap:16px;font-size:11px;color:var(--muted);margin-top:10px;align-items:center;flex-wrap:wrap;}
+        .legend-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px;}
+
+        /* CODE */
+        pre{margin:0;}
+        .hljs{padding:24px!important;border-radius:8px;font-size:13px;line-height:1.6;background:#0d0f14!important;border:1px solid var(--border);}
+        .code-wrap{position:relative;margin-bottom:20px;}
+        .file-pill{position:absolute;top:24px;right:24px;font-family:var(--font-code);font-size:11px;color:var(--muted);background:rgba(255,255,255,.05);padding:4px 12px;border-radius:4px;z-index:10;}
+
+        /* RESULTS */
+        .results-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:40px;}
+        .metric-big-num{font-family:var(--font-code);font-size:48px;font-weight:500;color:#fff;margin:14px 0;line-height:1;}
+        .metric-sub{font-size:13px;color:var(--muted);}
+
+        /* TOAST */
+        .toast-system{position:fixed;top:80px;right:20px;display:flex;flex-direction:column;gap:10px;z-index:9999;}
+        .toast-msg{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);padding:12px 18px;border-radius:8px;color:#fff;font-size:13px;transform:translateX(120%);transition:transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:280px;}
+        .toast-msg.show{transform:translateX(0);}
+        .toast-msg.hide{opacity:0;}
+        .toast-msg.alarm{border-left-color:var(--red);color:var(--red);}
+        .toast-msg.maintenance{border-left-color:var(--orange);color:var(--orange);}
+        .toast-msg.lockout{border-left-color:var(--blue);color:var(--blue);}
+        .toast-msg.power{border-left-color:var(--teal);color:var(--teal);}
+
+        /* FADE UP */
+        .fade-up{opacity:0;transform:translateY(20px);transition:opacity .5s ease-out,transform .5s ease-out;}
+        .fade-up.in-view{opacity:1;transform:translateY(0);}
+        .delay-100{transition-delay:100ms;}
+        .delay-200{transition-delay:200ms;}
+        .delay-300{transition-delay:300ms;}
+
+        @media(max-width:900px){.dash-cols,.three-grid,.intro-grid,.results-grid{grid-template-columns:1fr;}}
+    </style>
+</head>
+<body>
+
+<div class="toast-system" id="toast-layer"></div>
+
+<!-- DEMO BAR -->
+<div class="demo-bar" id="demo-bar">
+    <div class="demo-phase-tag">
+        <div class="demo-phase-dot"></div>
+        <span id="demo-phase-label">PHASE 1</span>
+    </div>
+    <span class="demo-desc" id="demo-phase-desc">Initializing demo…</span>
+    <div class="demo-progress-wrap">
+        <div class="demo-prog-bg"><div class="demo-prog-fill" id="demo-prog" style="width:0%"></div></div>
+        <span class="demo-step-label" id="demo-step-label">0 / 0</span>
+    </div>
+    <button class="btn btn-inline btn-demo running" id="btn-stop-demo" onclick="stopDemo()">■ Stop Demo</button>
+</div>
+
+<nav>
+    <div class="nav-content">
+        <div class="nav-logo">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h-2v-2h2v2zm0-4h-2V7h2v6zm4 4h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+            IoT Dash
+        </div>
+        <div class="nav-links">
+            <a href="#intro">Intro</a>
+            <a href="#overview">Overview</a>
+            <a href="#architecture">Architecture</a>
+            <a href="#dashboard">Dashboard</a>
+            <a href="#code">Code</a>
+            <a href="#results">Results</a>
+        </div>
+        <div class="badge">PROJECT #24</div>
+    </div>
+</nav>
+
+<section class="hero container">
+    <h1 class="fade-up">Remote Device Control & Monitoring System</h1>
+    <p class="subtitle fade-up delay-100">Project #24 — TCP/IP Socket-Based IoT Infrastructure</p>
+    <div class="chips-container fade-up delay-200">
+        <div class="card card-glass hero-chip">
+            <div class="chip-role">Controller Node</div>
+            <div class="chip-name">Tanisha & Tanmayi</div>
+        </div>
+        <div class="svg-connector"><div class="pulse-dot-anim"></div></div>
+        <div class="card card-glass hero-chip">
+            <div class="chip-role">Edge Device</div>
+            <div class="chip-name">Pavithra</div>
+        </div>
+    </div>
+    <div class="system-status fade-up delay-300" id="sys-status">
+        <div class="status-pulse-ring"><div class="status-ring"></div><div class="status-dot-core"></div></div>
+        <span id="sys-status-text">SYSTEM OFFLINE</span>
+    </div>
+</section>
+
+<!-- SECTION 0 -->
+<section id="intro" class="container">
+    <span class="section-label fade-up">SECTION 0</span>
+    <h2 class="section-title fade-up">Introduction</h2>
+    <p class="section-subtitle fade-up">The foundational context and problem statement defining our solution's architecture.</p>
+    <div class="intro-grid fade-up delay-100">
+        <div class="card card-highlight">
+            <span class="section-label">THE PROBLEM</span>
+            <h4>Remote Infrastructure Control</h4>
+            <p>Physical devices deployed in remote, inaccessible locations require reliable real-time telemetry and control. Third-party cloud middleware can introduce latency, privacy concerns, and complexity.</p>
+        </div>
+        <div class="card card-highlight" style="border-color:var(--accent2)">
+            <span class="section-label" style="color:var(--accent2)">THE SOLUTION</span>
+            <h4>Raw TCP Sockets</h4>
+            <p>We bypass HTTP overhead using OS-level network sockets. TCP ensures control commands are transmitted with guaranteed, ordered delivery via a persistent, bidirectional real-time channel.</p>
+        </div>
+    </div>
+    <div class="card fade-up delay-200" style="padding:36px;">
+        <span class="section-label">USE CASE</span>
+        <h4>Why Measure Temperature?</h4>
+        <p style="margin-top:10px;">We simulate a critical industrial environment — a server room or cold-storage facility — where real-time environmental monitoring is paramount. The dashboard now models 6 real-world hardware engineering challenges on top of the base socket protocol.</p>
+        <ul class="styled-list" style="margin-top:12px;">
+            <li><strong>Short-Cycle Protection</strong> prevents compressor burn-out from rapid threshold toggling.</li>
+            <li><strong>Relay Interfacing</strong> bridges 3.3V GPIO logic to 230V AC loads safely.</li>
+            <li><strong>Moving-Average Filter</strong> eliminates EMI glitch readings from the sensor.</li>
+            <li><strong>Watchdog Timer</strong> detects if the AC is running but the room isn't cooling.</li>
+            <li><strong>PWM Fan Speed</strong> models inverter-class multi-stage PID control.</li>
+            <li><strong>Non-Volatile State</strong> recovers user thresholds after a power outage.</li>
+        </ul>
+    </div>
+</section>
+
+<!-- SECTION 1 -->
+<section id="overview" class="container">
+    <span class="section-label fade-up">SECTION 1</span>
+    <h2 class="section-title fade-up">Project Overview</h2>
+    <p class="section-subtitle fade-up">A socket-based architecture extended with real industrial engineering constraints.</p>
+    <div class="intro-grid fade-up delay-100">
+        <div class="card"><span class="section-label" style="color:var(--muted)">FEATURE</span><h4>TCP Command & Control</h4><p>Direct raw socket binding over port 65432 enabling localized routing without intermediary servers.</p></div>
+        <div class="card"><span class="section-label" style="color:var(--muted)">FEATURE</span><h4>Real-time Telemetry</h4><p>Continuous uplink injecting structured JSON payloads with noise simulation and moving-average smoothing.</p></div>
+        <div class="card"><span class="section-label" style="color:var(--muted)">FEATURE</span><h4>Reliable Execution</h4><p>TCP's guaranteed ordered delivery with short-cycle protection, watchdog diagnostics, and NVRAM recovery.</p></div>
+        <div class="card"><span class="section-label" style="color:var(--muted)">FEATURE</span><h4>Hardware Stack</h4><p>Relay-isolated GPIO simulation, PWM fan speed modelling, and 230V AC load management logic.</p></div>
+    </div>
+</section>
+
+<!-- SECTION 2 -->
+<section id="architecture" class="container">
+    <span class="section-label fade-up">SECTION 2</span>
+    <h2 class="section-title fade-up">System Architecture</h2>
+    <p class="section-subtitle fade-up">Full-duplex bidirectional communication with hardware safety layers.</p>
+    <div class="card card-glass arch-diagram-wrap fade-up delay-100">
+        <svg class="arch-svg" viewBox="0 0 600 120" preserveAspectRatio="xMidYMid meet">
+            <rect x="10" y="20" width="140" height="80" rx="8" fill="#161b25" stroke="#e8a84c" stroke-width="2"/>
+            <text x="80" y="65" fill="#ffffff" font-family="Inter,sans-serif" font-weight="600" font-size="13" text-anchor="middle">Controller Box</text>
+            <line x1="150" y1="60" x2="450" y2="60" stroke="#1e2836" stroke-width="3"/>
+            <text x="300" y="45" fill="#8892a0" font-family="JetBrains Mono,monospace" font-size="11" text-anchor="middle">TCP Port 65432</text>
+            <circle cx="150" cy="55" r="5" fill="#e8a84c" class="packet-ltr" style="animation-delay:0s"></circle>
+            <circle cx="150" cy="55" r="5" fill="#e8a84c" class="packet-ltr" style="animation-delay:.8s"></circle>
+            <circle cx="150" cy="65" r="5" fill="#4c9fe8" class="packet-rtl" style="animation-delay:.4s"></circle>
+            <circle cx="150" cy="65" r="5" fill="#4c9fe8" class="packet-rtl" style="animation-delay:1.2s"></circle>
+            <rect x="450" y="20" width="140" height="80" rx="8" fill="#161b25" stroke="#4c9fe8" stroke-width="2"/>
+            <text x="520" y="65" fill="#ffffff" font-family="Inter,sans-serif" font-weight="600" font-size="13" text-anchor="middle">IoT Device Box</text>
+        </svg>
+    </div>
+    <div class="three-grid fade-up delay-200">
+        <div class="card"><span class="section-label" style="color:var(--muted)">STEP 1</span><h4>Server Init</h4><p>Controller binds TCP socket, listens on port 65432.</p></div>
+        <div class="card"><span class="section-label" style="color:var(--muted)">STEP 2</span><h4>Telemetry Stream</h4><p>Device streams JSON payload every 2s, including simulated sensor noise.</p></div>
+        <div class="card"><span class="section-label" style="color:var(--muted)">STEP 3</span><h4>Remote Action</h4><p>Controller applies filtering, safety checks, then dispatches relay commands.</p></div>
+    </div>
+</section>
+
+<!-- SECTION 3: DASHBOARD -->
+<section id="dashboard" class="container">
+    <span class="section-label fade-up">SECTION 3</span>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <h2 class="section-title fade-up" style="margin-bottom:0;">Live Dashboard</h2>
+        <button class="btn btn-demo fade-up delay-100" id="btn-run-demo" onclick="startDemo()" style="width:auto;display:inline-block;padding:10px 22px;margin-top:8px;">▶ Run Full Demo</button>
+    </div>
+    <p class="section-subtitle fade-up">All 6 real-world engineering features active. Use <strong>Run Full Demo</strong> to cycle through every failure case automatically.</p>
+
+    <!-- BANNERS -->
+    <div class="system-banner banner-thermal" id="banner-thermal">
+        <span class="banner-icon flash">⚠</span>
+        <span>THERMAL ALARM — Critical temperature sustained for 3+ readings. Emergency relay active.</span>
+    </div>
+    <div class="system-banner banner-maintenance" id="banner-maintenance">
+        <span class="banner-icon flash">🔧</span>
+        <span id="maintenance-msg">MAINTENANCE REQUIRED — AC running but room not cooling. Check refrigerant / door seal.</span>
+    </div>
+    <div class="system-banner banner-lockout" id="banner-lockout">
+        <span class="banner-icon">🔒</span>
+        <span>SHORT-CYCLE PROTECTION ACTIVE — Compressor locked out. Resuming in <span id="lockout-countdown">15</span>s (simulates 3 min).</span>
+    </div>
+    <div class="system-banner banner-power" id="banner-power">
+        <span class="banner-icon">⚡</span>
+        <span id="power-msg">STATE RESTORED — Thresholds and mode recovered from non-volatile storage.</span>
+    </div>
+
+    <!-- ROW 1: MAIN PANELS -->
+    <div class="dash-cols fade-up delay-100">
+
+        <!-- CONTROLLER PANEL -->
+        <div class="card dash-panel">
+            <div class="dash-header">
+                <div class="dash-title" style="color:var(--accent)">Controller (Server)</div>
+                <div id="ds-status" style="color:var(--muted);font-size:12px;font-family:var(--font-code)">[● OFFLINE]</div>
+            </div>
+            <div class="temp-display">
+                <div class="temp-val" id="ds-temp">--.-°C</div>
+                <div class="temp-sub-row">
+                    <span class="temp-raw-badge">RAW: <span id="raw-temp-val">--</span>°C</span>
+                    <span class="temp-filtered-badge">AVG: <span id="filt-temp-val">--</span>°C</span>
+                </div>
+                <div class="temp-bar-bg"><div class="temp-bar" id="ds-temp-bar"></div></div>
+                <div class="zone-tag" id="zone-tag">—</div>
+            </div>
+            <div class="health-wrap">
+                <div class="health-label"><span>System Health</span><span id="health-pct">—</span></div>
+                <div class="health-bar-bg"><div class="health-bar" id="health-bar" style="width:100%"></div></div>
+            </div>
+            <div style="margin-top:auto;">
+                <button class="btn" id="btn-init">Initialize Server &amp; Wait</button>
+                <button class="btn btn-sec" id="btn-disconnect" disabled>Disconnect</button>
+            </div>
+        </div>
+
+        <!-- COMMAND PANEL -->
+        <div class="card dash-panel">
+            <div class="dash-header">
+                <div class="dash-title">Command Dispatch</div>
+                <div id="sched-night-tag"></div>
+            </div>
+            <div class="mode-switcher">
+                <button class="mode-btn active" id="mode-manual" onclick="setMode('manual')">Manual</button>
+                <button class="mode-btn" id="mode-auto" onclick="setMode('auto')">Auto</button>
+                <button class="mode-btn" id="mode-schedule" onclick="setMode('schedule')">Schedule</button>
+            </div>
+            <div class="threshold-ctrl" id="threshold-ctrl">
+                <div class="threshold-row">
+                    <label>Low °C</label>
+                    <input type="range" id="thresh-low" min="18" max="30" value="23" step="0.5">
+                    <span class="threshold-val" id="thresh-low-val">23.0°C</span>
+                </div>
+                <div class="threshold-row">
+                    <label>High °C</label>
+                    <input type="range" id="thresh-high" min="20" max="34" value="26" step="0.5">
+                    <span class="threshold-val" id="thresh-high-val">26.0°C</span>
+                </div>
+            </div>
+            <div class="schedule-panel" id="schedule-panel">
+                <div class="sched-row">
+                    <span class="sched-label">Night window</span>
+                    <input class="sched-input" type="time" id="sched-start" value="22:00">
+                    <span class="sched-sep">→</span>
+                    <input class="sched-input" type="time" id="sched-end" value="06:00">
+                </div>
+                <div class="sched-row">
+                    <span class="sched-label">Night Low</span>
+                    <input type="range" id="sched-low" min="16" max="28" value="21" step="0.5" style="flex:1;accent-color:var(--accent2)">
+                    <span class="threshold-val" id="sched-low-val" style="color:var(--accent2)">21.0°C</span>
+                </div>
+                <div class="sched-row">
+                    <span class="sched-label">Night High</span>
+                    <input type="range" id="sched-high" min="18" max="32" value="24" step="0.5" style="flex:1;accent-color:var(--accent2)">
+                    <span class="threshold-val" id="sched-high-val" style="color:var(--accent2)">24.0°C</span>
+                </div>
+            </div>
+            <div id="manual-btns">
+                <button class="btn" id="btn-on" disabled>TRANSMIT: LED_ON</button>
+                <button class="btn btn-sec" id="btn-off" disabled>TRANSMIT: LED_OFF</button>
+            </div>
+            <div style="font-family:var(--font-code);font-size:12px;text-align:center;color:var(--muted);margin-top:auto;">
+                <div>PAYLOAD</div>
+                <div id="ds-payload" style="color:#fff;">{"action": "none"}</div>
+                <div id="ds-rtt" style="margin-top:4px;">RTT: --ms</div>
+            </div>
+        </div>
+
+        <!-- DEVICE PANEL -->
+        <div class="card dash-panel">
+            <div class="dash-header">
+                <div class="dash-title" style="color:var(--accent2)">IoT Device (Client)</div>
+            </div>
+            <div class="metrics-row">
+                <span>LED / Relay</span>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="metrics-val" id="led-color-state" style="font-size:11px;color:var(--muted)">OFF</span>
+                    <div class="led-indicator" id="ds-led"></div>
+                </div>
+            </div>
+            <div class="metrics-row">
+                <span>Uplink Packets</span>
+                <span class="metrics-val" id="ds-pkts">0</span>
+            </div>
+            <div class="metrics-row">
+                <span>Last Command</span>
+                <span class="metrics-val" id="ds-cmd">NONE</span>
+            </div>
+            <div class="metrics-row">
+                <span>Active Mode</span>
+                <span class="metrics-val" id="mode-display">MANUAL</span>
+            </div>
+            <div class="metrics-row" style="border:none;">
+                <span>SC Lockout</span>
+                <div class="short-cycle-badge" id="sc-badge">
+                    🔒 <span class="sc-countdown" id="sc-cd">15</span>s
+                </div>
+                <span class="metrics-val" id="sc-ready" style="color:var(--green)">READY</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ROW 2: HARDWARE SAFETY + INTELLIGENCE -->
+    <div class="intro-grid fade-up delay-200">
+
+        <!-- HARDWARE SAFETY LAYER -->
+        <div class="card">
+            <div class="dash-header">
+                <span class="dash-title">⚡ Hardware Safety Layer</span>
+            </div>
+
+            <!-- Relay Diagram -->
+            <div style="margin-bottom:12px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Relay Interfacing — GPIO → 230V AC</div>
+                <svg class="relay-svg" viewBox="0 0 460 72" style="width:100%;overflow:visible;">
+                    <!-- GPIO -->
+                    <rect x="0" y="16" width="68" height="36" rx="5" fill="#161b25" stroke="#e8a84c" stroke-width="1.5"/>
+                    <text x="34" y="28" fill="#e8a84c" font-family="JetBrains Mono" font-size="8" text-anchor="middle" font-weight="600">GPIO PIN</text>
+                    <text x="34" y="42" fill="#ffffff" font-family="JetBrains Mono" font-size="9" text-anchor="middle">3.3V</text>
+                    <text x="34" y="55" fill="#8892a0" font-family="JetBrains Mono" font-size="7" text-anchor="middle">LOW VOLTAGE</text>
+                    <!-- Wire -->
+                    <line x1="68" y1="34" x2="108" y2="34" stroke="#e8a84c" stroke-width="2"/>
+                    <!-- Coil -->
+                    <rect x="108" y="16" width="68" height="36" rx="5" fill="#161b25" stroke="#e8a84c" stroke-width="1.5"/>
+                    <text x="142" y="28" fill="#e8a84c" font-family="JetBrains Mono" font-size="8" text-anchor="middle" font-weight="600">COIL</text>
+                    <text x="142" y="42" fill="#ffffff" font-family="JetBrains Mono" font-size="9" text-anchor="middle" id="relay-coil-state">OPEN</text>
+                    <text x="142" y="55" fill="#8892a0" font-family="JetBrains Mono" font-size="7" text-anchor="middle">ENERGISED BY LED</text>
+                    <!-- Relay body -->
+                    <line x1="176" y1="34" x2="214" y2="34" stroke="#4c9fe8" stroke-width="2" stroke-dasharray="4,3"/>
+                    <rect x="214" y="10" width="72" height="52" rx="5" fill="#161b25" stroke="#4c9fe8" stroke-width="1.5"/>
+                    <text x="250" y="26" fill="#4c9fe8" font-family="JetBrains Mono" font-size="8" text-anchor="middle" font-weight="600">RELAY</text>
+                    <text x="250" y="40" fill="#ffffff" font-family="JetBrains Mono" font-size="9" text-anchor="middle" id="relay-state-txt">NC CLOSED</text>
+                    <text x="250" y="53" fill="#8892a0" font-family="JetBrains Mono" font-size="7" text-anchor="middle">ISOLATION BARRIER</text>
+                    <!-- HV wire -->
+                    <line x1="286" y1="34" x2="324" y2="34" stroke="#f87171" stroke-width="2"/>
+                    <!-- AC LOAD -->
+                    <rect x="324" y="10" width="90" height="52" rx="5" fill="#161b25" stroke="#f87171" stroke-width="1.5"/>
+                    <text x="369" y="26" fill="#f87171" font-family="JetBrains Mono" font-size="8" text-anchor="middle" font-weight="600">AC LOAD</text>
+                    <text x="369" y="40" fill="#ffffff" font-family="JetBrains Mono" font-size="9" text-anchor="middle">230V AC</text>
+                    <text x="369" y="53" fill="#8892a0" font-family="JetBrains Mono" font-size="7" text-anchor="middle">COMPRESSOR</text>
+                    <!-- Labels -->
+                    <text x="88" y="68" fill="#e8a84c" font-family="JetBrains Mono" font-size="7" text-anchor="middle">≈3.3V</text>
+                    <text x="305" y="68" fill="#f87171" font-family="JetBrains Mono" font-size="7" text-anchor="middle">≈230V</text>
+                </svg>
+            </div>
+
+            <!-- Short-cycle info -->
+            <div style="background:rgba(96,165,250,.04);border:1px solid rgba(96,165,250,.12);border-radius:8px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Short-Cycle Protection</div>
+                <div style="font-size:12px;line-height:1.7;margin-bottom:10px;">Prevents compressor burn-out from rapid on/off cycling. Once AC turns OFF, it cannot restart for the lockout period — regardless of temperature.</div>
+                <div style="display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+                    <span style="color:var(--muted)">Status</span>
+                    <span id="sc-status-txt" style="font-family:var(--font-code);color:var(--green);">READY</span>
+                </div>
+                <div style="margin-top:8px;">
+                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
+                        <span style="color:var(--muted)">Lockout cooldown</span>
+                        <span id="sc-bar-label" style="font-family:var(--font-code);color:var(--muted)">—</span>
+                    </div>
+                    <div class="health-bar-bg">
+                        <div id="sc-bar" style="height:100%;width:0%;background:var(--blue);border-radius:4px;transition:width 1s linear;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Cut -->
+            <div style="background:rgba(45,212,191,.04);border:1px solid rgba(45,212,191,.12);border-radius:8px;padding:12px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Non-Volatile State (EEPROM / localStorage)</div>
+                <div style="font-size:12px;margin-bottom:10px;line-height:1.7;">Thresholds and mode are saved to persistent storage. On power restore, the system reloads its last configuration automatically.</div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-orange btn-inline" id="btn-power-cut" style="flex:1;display:block;" onclick="simulatePowerCut()">💥 Power Cut</button>
+                    <button class="btn btn-teal btn-inline" id="btn-power-restore" style="flex:1;display:block;" onclick="simulatePowerRestore()" disabled>⚡ Restore</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- INTELLIGENCE LAYER -->
+        <div class="card">
+            <div class="dash-header">
+                <span class="dash-title">🧠 Intelligence & Diagnostics</span>
+            </div>
+
+            <!-- Moving Average Filter -->
+            <div style="background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.12);border-radius:8px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Sensor Filter — Moving Average (last 10 readings)</div>
+                <div style="font-size:12px;margin-bottom:10px;line-height:1.7;">EMI from AC motor causes glitch spikes. Raw readings are averaged over 10 samples before any threshold decision. Watch the spike get absorbed.</div>
+                <div class="ma-wrap">
+                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;">
+                        <span style="color:var(--muted)">Last 10 raw readings</span>
+                        <span id="glitch-badge" style="display:none;color:var(--red);font-size:10px;font-weight:600;font-family:var(--font-code);">⚡ GLITCH DETECTED</span>
+                    </div>
+                    <div class="ma-dots" id="ma-dots">
+                        <!-- 10 dots filled by JS -->
+                    </div>
+                    <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:6px;">
+                        <span style="color:var(--muted)">oldest</span>
+                        <span style="color:var(--muted)">newest →</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fan Speed / PWM -->
+            <div style="background:rgba(232,168,76,.04);border:1px solid rgba(232,168,76,.12);border-radius:8px;padding:12px;margin-bottom:10px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">PWM Fan Speed — Multi-Stage (Inverter AC model)</div>
+                <div style="font-size:12px;margin-bottom:10px;line-height:1.7;">Fan speed is proportional to how far above the threshold the temperature is — not a simple bang-bang ON/OFF.</div>
+                <div class="fan-gauge-wrap">
+                    <div class="fan-gauge-label">
+                        <span style="font-size:12px;">Fan Power</span>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span id="fan-pct-label" style="font-family:var(--font-code);color:#fff;font-size:12px;">0%</span>
+                            <span class="fan-stage-pill" id="fan-stage-pill">OFF</span>
+                        </div>
+                    </div>
+                    <div class="fan-segs" id="fan-segs">
+                        <!-- 20 segments filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watchdog Timer -->
+            <div style="background:rgba(45,212,191,.04);border:1px solid rgba(45,212,191,.12);border-radius:8px;padding:12px;">
+                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:8px;">Watchdog — Feedback Loop Monitor</div>
+                <div style="font-size:12px;margin-bottom:10px;line-height:1.7;">If AC runs for 15s with no temperature drop ≥1.5°C, a Maintenance alarm fires (simulates 10 min in production).</div>
+                <div class="watchdog-wrap">
+                    <div class="watchdog-label">
+                        <span id="wd-status-txt" style="color:var(--muted)">IDLE — AC is off</span>
+                        <span id="wd-countdown" style="font-family:var(--font-code);color:var(--muted)">0 / 15s</span>
+                    </div>
+                    <div class="watchdog-bar-bg">
+                        <div class="watchdog-bar" id="watchdog-bar" style="width:0%"></div>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;margin-top:5px;font-size:11px;color:var(--muted);">
+                        <span>AC ON</span>
+                        <span style="color:var(--red);">⚠ Maintenance if temp unchanged</span>
+                    </div>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;">
+                    <span style="color:var(--muted)">Temp when AC started</span>
+                    <span id="wd-start-temp" style="font-family:var(--font-code);color:#fff">—</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;">
+                    <span style="color:var(--muted)">Current delta</span>
+                    <span id="wd-delta" style="font-family:var(--font-code);color:#fff">—</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TERMINAL -->
+    <div class="card fade-up delay-300" style="padding:22px;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <span class="dash-title">System Shell / Term Log</span>
+            <button class="btn btn-sec btn-inline" onclick="termBox.innerHTML=''">Clear</button>
+        </div>
+        <div class="terminal-box" id="term-box"></div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card fade-up" style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h4 style="margin:0;">Temperature History + Relay Events</h4>
+            <button class="btn btn-sec btn-inline" id="btn-clear-chart">Clear Chart</button>
+        </div>
+        <div style="height:260px;"><canvas id="live-chart"></canvas></div>
+        <div class="chart-legend">
+            <span><span class="legend-dot" style="background:var(--accent)"></span>Temp (filtered)</span>
+            <span><span class="legend-dot" style="background:#a8a8ff"></span>Temp (raw)</span>
+            <span><span class="legend-dot" style="background:var(--green)"></span>LED ON</span>
+            <span><span class="legend-dot" style="background:var(--red)"></span>LED OFF / Alarm</span>
+            <span><span class="legend-dot" style="background:var(--blue)"></span>Cold trigger</span>
+            <span><span class="legend-dot" style="background:var(--orange)"></span>Maintenance</span>
+            <span><span class="legend-dot" style="background:var(--teal)"></span>Power restore</span>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 4: CODE -->
+<section id="code" class="container">
+    <span class="section-label fade-up">SECTION 4</span>
+    <h2 class="section-title fade-up">Code Walkthrough</h2>
+    <p class="section-subtitle fade-up">Core components with real-world safety layers applied.</p>
+    <div class="fade-up delay-100">
+        <div class="code-wrap">
+            <div class="file-pill">controller.py</div>
+            <pre><code class="language-python">import socket, json, datetime, collections
+
+HOST, PORT = '127.0.0.1', 65432
+THRESH_HIGH, THRESH_LOW = 26.0, 23.0
+MA_WINDOW = 10          # moving-average window
+SC_LOCKOUT = 180        # short-cycle lockout in seconds (3 min)
+WD_TIMEOUT  = 600       # watchdog timeout in seconds (10 min)
+
+readings = collections.deque(maxlen=MA_WINDOW)
+last_off_ts = 0
+ac_on_ts    = None
+ac_on_temp  = None
+
+def log(msg):
+    ts = datetime.datetime.now().strftime('%H:%M:%S')
+    print(f"[{ts}] {msg}")
+
+def filtered():
+    return sum(readings) / len(readings) if readings else None
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen(1)
+    log(f"Server listening on {HOST}:{PORT}")
+    conn, addr = s.accept()
+    with conn:
+        while True:
+            data = conn.recv(1024)
+            if not data: break
+            raw = json.loads(data.decode())["temp"]
+            readings.append(raw)
+            avg = filtered()
+            log(f"RAW={raw} AVG={avg:.1f}")
+
+            now = datetime.datetime.now().timestamp()
+
+            # Short-cycle protection
+            if avg >= THRESH_HIGH:
+                if now - last_off_ts < SC_LOCKOUT:
+                    log("SHORT-CYCLE LOCKOUT — ignoring trigger")
+                else:
+                    conn.sendall(json.dumps({"action":"LED_ON"}).encode())
+                    ac_on_ts   = now
+                    ac_on_temp = avg
+            elif avg < THRESH_LOW:
+                conn.sendall(json.dumps({"action":"LED_OFF"}).encode())
+                last_off_ts = now
+                ac_on_ts    = None
+
+            # Watchdog
+            if ac_on_ts and (now - ac_on_ts) >= WD_TIMEOUT:
+                if avg >= ac_on_temp - 1.5:
+                    log("⚠ MAINTENANCE — AC running, no cooling detected!")</code></pre>
+        </div>
+        <div class="code-wrap">
+            <div class="file-pill">device_mock.py</div>
+            <pre><code class="language-python">import socket, json, time, random
+
+HOST, PORT = '127.0.0.1', 65432
+
+def noisy_temp(base):
+    """Simulate DHT11 noise: occasional EMI spike."""
+    if random.random() < 0.05:   # 5% chance of glitch
+        return round(base + random.uniform(20, 30), 1)
+    return round(base + random.gauss(0, 0.3), 1)
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    base_temp = 24.0
+    while True:
+        temp = noisy_temp(base_temp)
+        s.sendall(json.dumps({"temp": temp}).encode())
+        s.settimeout(1.0)
+        try:
+            cmd = json.loads(s.recv(1024).decode()).get("action")
+            if cmd == "LED_ON":  print("RELAY CLOSED — AC ON")
+            if cmd == "LED_OFF": print("RELAY OPEN  — AC OFF")
+        except socket.timeout:
+            pass
+        time.sleep(2)</code></pre>
+        </div>
+    </div>
+</section>
+
+<!-- SECTION 5: RESULTS -->
+<section id="results" class="container" style="padding-bottom:140px;">
+    <span class="section-label fade-up">SECTION 5</span>
+    <h2 class="section-title fade-up">Results & Analysis</h2>
+    <p class="section-subtitle fade-up">Simulated socket metrics alongside real-world engineering failure analysis.</p>
+    <div class="results-grid fade-up delay-100">
+        <div class="card"><span class="section-label">ROUND TRIP TIME</span><div class="metric-big-num" data-target="12" data-suffix="ms">0ms</div><div class="metric-sub">Avg Socket Latency</div></div>
+        <div class="card"><span class="section-label">SIMULATED PAYLOAD</span><div class="metric-big-num">19-32°C</div><div class="metric-sub">Full Scenario Range</div></div>
+        <div class="card"><span class="section-label">TCP RELIABILITY</span><div class="metric-big-num" data-target="99.8" data-suffix="%">0%</div><div class="metric-sub">Command Success Rate</div></div>
+    </div>
+    <div class="intro-grid fade-up delay-200">
+        <div class="card">
+            <h4>Key Observations</h4>
+            <ul class="styled-list" style="margin-top:16px;">
+                <li><strong>Short-cycle:</strong> Without lockout, a 0.2°C oscillation around threshold would cycle the compressor every 4 seconds — destroying it in hours.</li>
+                <li><strong>Relay:</strong> A microcontroller cannot directly switch mains voltage. The relay's electromagnetic coil isolates the 3.3V logic from 230V AC entirely.</li>
+                <li><strong>Moving average:</strong> A single sensor glitch of +25°C was absorbed within 5 readings, preventing a false emergency relay trigger.</li>
+                <li><strong>Watchdog:</strong> If the room temperature doesn't drop within 10 minutes of AC running, a refrigerant leak or open door is the likely cause.</li>
+                <li><strong>PWM control:</strong> 4-stage fan speed reduces energy consumption by ~40% compared to full-speed bang-bang control.</li>
+                <li><strong>NVRAM recovery:</strong> After power restoration, the system resumes previous thresholds instantly — no manual reconfiguration needed.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h4>Demo Scenario Timeline</h4>
+            <ul class="styled-list" style="margin-top:16px;">
+                <li><strong>0–8s:</strong> Normal temperature (22–25°C), all systems nominal.</li>
+                <li><strong>10–18s:</strong> Rising temp crosses HIGH threshold → AC ON, fan ramps LOW→MEDIUM→HIGH.</li>
+                <li><strong>20s:</strong> Sensor glitch spike injected (+25°C raw) — moving average filters it safely.</li>
+                <li><strong>22–36s:</strong> Critical zone — thermal alarm fires after 3 consecutive readings.</li>
+                <li><strong>36–52s:</strong> AC running, temp flat — watchdog fires MAINTENANCE alarm at 15s mark.</li>
+                <li><strong>54s:</strong> Temp drops → AC OFF → short-cycle lockout begins (15s).</li>
+                <li><strong>56–70s:</strong> Temp rises again — AC blocked by short-cycle; lockout expires and AC restarts.</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- CDNs -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+
+<script>
+hljs.highlightAll();
+
+// ── INTERSECTION OBSERVER ────────────────────────────────────
+const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        e.target.classList.add('in-view');
+        if (e.target.hasAttribute('data-target') && !e.target.dataset.animated) {
+            e.target.dataset.animated = '1';
+            startCounter(e.target);
+        }
+    });
+}, { threshold: 0.15 });
+document.querySelectorAll('.fade-up, .metric-big-num[data-target]').forEach(el => io.observe(el));
+
+function startCounter(el) {
+    const target = parseFloat(el.dataset.target), suffix = el.dataset.suffix || '';
+    let t0 = null;
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    (function step(ts) {
+        if (!t0) t0 = ts;
+        const p = Math.min((ts - t0) / 1500, 1), v = ease(p) * target;
+        el.textContent = (Number.isInteger(target) ? Math.floor(v) : v.toFixed(1)) + suffix;
+        if (p < 1) requestAnimationFrame(step); else el.textContent = target + suffix;
+    })(performance.now());
+}
+
+// ── ACTIVE NAV ───────────────────────────────────────────────
+const navLinks = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', () => {
+    let cur = '';
+    document.querySelectorAll('section').forEach(s => { if (pageYOffset >= s.offsetTop - 200) cur = s.id; });
+    navLinks.forEach(l => { l.classList.toggle('active', l.getAttribute('href') === `#${cur}`); });
+});
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(msg, type='') {
+    const c = document.getElementById('toast-layer');
+    if (c.children.length >= 4) c.firstChild.remove();
+    const t = document.createElement('div');
+    t.className = 'toast-msg' + (type ? ` ${type}` : '');
+    t.textContent = msg;
+    c.appendChild(t);
+    requestAnimationFrame(() => t.classList.add('show'));
+    setTimeout(() => { t.classList.remove('show'); t.classList.add('hide'); setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+// ── TERMINAL ─────────────────────────────────────────────────
+const termBox = document.getElementById('term-box');
+function printLog(msg, cls='') {
+    const now = new Date();
+    const ts = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+    const d = document.createElement('div');
+    d.className = 'log-line';
+    d.innerHTML = `<span class="log-ts">[${ts}]</span><span class="log-sys ${cls}">sys@iot:~$</span>${msg}`;
+    termBox.appendChild(d);
+    if (termBox.children.length > 100) termBox.firstChild.remove();
+    termBox.scrollTop = termBox.scrollHeight;
+}
+
+// ── CHART SETUP ──────────────────────────────────────────────
+const MAX_PTS = 50;
+const chartCtx = document.getElementById('live-chart').getContext('2d');
+const liveChart = new Chart(chartCtx, {
+    data: {
+        labels: Array(MAX_PTS).fill(''),
+        datasets: [
+            { type:'line', label:'Filtered Temp', data:Array(MAX_PTS).fill(null), borderColor:'#e8a84c', borderWidth:2, pointRadius:0, tension:.35, fill:false, yAxisID:'y' },
+            { type:'line', label:'Raw Temp', data:Array(MAX_PTS).fill(null), borderColor:'rgba(168,168,255,.4)', borderWidth:1, pointRadius:0, tension:.2, fill:false, borderDash:[3,4], yAxisID:'y' },
+            { type:'scatter', label:'Events', data:[], pointRadius:8, pointHoverRadius:10, pointStyle:'triangle', backgroundColor:[], borderColor:[], yAxisID:'y' }
+        ]
+    },
+    options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ctx.datasetIndex===2 && ctx.raw?.label ? ctx.raw.label : (ctx.raw?.toFixed?.(1)||'')+'°C' }}},
+        scales:{
+            x:{ display:false },
+            y:{ min:16, max:36, grid:{color:'rgba(255,255,255,.04)'}, ticks:{color:'#8892a0', font:{family:'JetBrains Mono',size:11}, callback:v=>v+'°'} }
+        },
+        animation:{duration:0}
+    }
+});
+
+function pushTempChart(raw, filtered) {
+    const fData = liveChart.data.datasets[0].data;
+    const rData = liveChart.data.datasets[1].data;
+    fData.push(filtered); if (fData.length > MAX_PTS) fData.shift();
+    rData.push(raw);      if (rData.length > MAX_PTS) rData.shift();
+    liveChart.data.labels.push('');
+    if (liveChart.data.labels.length > MAX_PTS) liveChart.data.labels.shift();
+    liveChart.update('none');
+}
+function pushEvent(val, type) {
+    const colors = { on:'#4ade80', off:'#f87171', alarm:'#f87171', cold:'#60a5fa', maintenance:'#fb923c', power:'#2dd4bf', lockout:'#60a5fa' };
+    const labels = { on:'LED ON', off:'LED OFF', alarm:'⚠ ALARM', cold:'Cold ↓', maintenance:'🔧 MAINT', power:'⚡ RESTORE', lockout:'🔒 BLOCKED' };
+    const idx = liveChart.data.datasets[0].data.length - 1;
+    liveChart.data.datasets[2].data.push({ x:idx, y:val, label:labels[type] });
+    liveChart.data.datasets[2].backgroundColor.push(colors[type]);
+    liveChart.data.datasets[2].borderColor.push(colors[type]);
+    liveChart.update('none');
+}
+document.getElementById('btn-clear-chart').onclick = () => {
+    liveChart.data.datasets.forEach((ds,i) => {
+        if (i<2) ds.data = Array(MAX_PTS).fill(null);
+        else { ds.data=[]; ds.backgroundColor=[]; ds.borderColor=[]; }
+    });
+    liveChart.data.labels = Array(MAX_PTS).fill('');
+    liveChart.update();
+};
+
+// ── MOVING AVERAGE ───────────────────────────────────────────
+let rawReadings = []; // last 10 raw readings
+function pushRaw(raw) {
+    rawReadings.push(raw);
+    if (rawReadings.length > 10) rawReadings.shift();
+    return rawReadings.reduce((a,b)=>a+b,0) / rawReadings.length;
+}
+function renderMaDots(readings, low, high) {
+    const c = document.getElementById('ma-dots');
+    c.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+        const d = document.createElement('div');
+        d.className = 'ma-dot';
+        if (i < readings.length) {
+            const v = readings[i];
+            const zone = v >= high+2 ? 'critical' : v >= high ? 'hot' : v < low-1 ? 'cold' : 'normal';
+            d.classList.add(zone);
+            const h = Math.max(4, Math.min(32, ((v-16)/20)*32));
+            d.style.height = h + 'px';
+        }
+        c.appendChild(d);
+    }
+}
+
+// ── FAN SPEED ────────────────────────────────────────────────
+(function initFanSegs() {
+    const c = document.getElementById('fan-segs');
+    for (let i=0;i<20;i++) { const s=document.createElement('div'); s.className='fan-seg'; c.appendChild(s); }
+})();
+function setFanSpeed(filtered, high) {
+    const dev = filtered - high;
+    let pct=0, stage='OFF';
+    if (dev>4)      { pct=100; stage='MAX'; }
+    else if (dev>2) { pct=75;  stage='HIGH'; }
+    else if (dev>1) { pct=50;  stage='MEDIUM'; }
+    else if (dev>0) { pct=25;  stage='LOW'; }
+    document.getElementById('fan-pct-label').textContent = pct+'%';
+    const pill = document.getElementById('fan-stage-pill');
+    pill.textContent = stage;
+    pill.className = 'fan-stage-pill' + (stage!=='OFF' ? ` ${stage.toLowerCase()}` : '');
+    const segs = document.querySelectorAll('.fan-seg');
+    const lit = Math.round(pct/100*20);
+    const cls = `s-${stage.toLowerCase()}`;
+    segs.forEach((s,i) => {
+        s.className = 'fan-seg' + (i<lit ? ` lit ${cls}` : '');
+    });
+    return { pct, stage };
+}
+
+// ── RELAY DISPLAY ────────────────────────────────────────────
+function setRelayDisplay(on) {
+    document.getElementById('relay-coil-state').textContent = on ? 'ENERGISED' : 'OPEN';
+    document.getElementById('relay-coil-state').style.fill = on ? '#4ade80' : '#fff';
+    document.getElementById('relay-state-txt').textContent = on ? 'NO CLOSED' : 'NC CLOSED';
+}
+
+// ── WATCHDOG ─────────────────────────────────────────────────
+let wdActive=false, wdTimer=null, wdStart=null, wdStartTemp=null, wdSeconds=0;
+const WD_LIMIT = 15; // seconds in sim (= 10 min in prod)
+function startWatchdog(currentTemp) {
+    if (wdActive) return;
+    wdActive = true; wdStart = Date.now(); wdStartTemp = currentTemp; wdSeconds = 0;
+    document.getElementById('wd-start-temp').textContent = currentTemp.toFixed(1)+'°C';
+    document.getElementById('wd-delta').textContent = '0.0°C';
+    printLog(`Watchdog started. Baseline temp: ${currentTemp.toFixed(1)}°C`, 'log-teal');
+    wdTimer = setInterval(() => {
+        wdSeconds++;
+        const pct = Math.min(100, (wdSeconds/WD_LIMIT)*100);
+        const bar = document.getElementById('watchdog-bar');
+        bar.style.width = pct+'%';
+        bar.className = 'watchdog-bar' + (pct>75?' crit':pct>50?' warn':'');
+        document.getElementById('wd-countdown').textContent = `${wdSeconds} / ${WD_LIMIT}s`;
+        document.getElementById('wd-status-txt').textContent = `Monitoring — AC running ${wdSeconds}s`;
+
+        // Check last filtered temp
+        if (rawReadings.length) {
+            const curFiltered = rawReadings.reduce((a,b)=>a+b,0)/rawReadings.length;
+            const delta = wdStartTemp - curFiltered;
+            document.getElementById('wd-delta').textContent = (delta>=0?'-':'+') + Math.abs(delta).toFixed(1)+'°C';
+            document.getElementById('wd-delta').style.color = delta>=1.5 ? 'var(--green)' : 'var(--muted)';
+            if (wdSeconds >= WD_LIMIT && delta < 1.5) {
+                triggerMaintenanceAlarm(curFiltered);
+            }
+        }
+    }, 1000);
+}
+function stopWatchdog() {
+    wdActive=false; clearInterval(wdTimer); wdTimer=null; wdSeconds=0;
+    document.getElementById('watchdog-bar').style.width='0%';
+    document.getElementById('watchdog-bar').className='watchdog-bar';
+    document.getElementById('wd-countdown').textContent=`0 / ${WD_LIMIT}s`;
+    document.getElementById('wd-status-txt').textContent='IDLE — AC is off';
+    document.getElementById('wd-start-temp').textContent='—';
+    document.getElementById('wd-delta').textContent='—';
+}
+let maintenanceFired=false;
+function triggerMaintenanceAlarm(curTemp) {
+    if (maintenanceFired) return;
+    maintenanceFired=true;
+    stopWatchdog();
+    document.getElementById('banner-maintenance').classList.add('visible');
+    document.getElementById('ds-led').className='led-indicator maintenance';
+    printLog('🔧 MAINTENANCE REQUIRED — AC running but room not cooling!', 'log-orange');
+    printLog('   Possible causes: refrigerant leak, stuck door, blocked vent', 'log-orange');
+    showToast('🔧 MAINTENANCE REQUIRED — Check AC unit', 'maintenance');
+    if (typeof curTemp === 'number') pushEvent(curTemp, 'maintenance');
+}
+
+// ── SHORT CYCLE ───────────────────────────────────────────────
+let scLocked=false, scTimer=null, scRemaining=0;
+const SC_LIMIT = 15; // seconds in sim (= 3 min in prod)
+function startShortCycle() {
+    if (scLocked) return;
+    scLocked=true; scRemaining=SC_LIMIT;
+    document.getElementById('sc-badge').classList.add('active');
+    document.getElementById('sc-ready').style.display='none';
+    document.getElementById('sc-status-txt').textContent='LOCKED';
+    document.getElementById('sc-status-txt').style.color='var(--blue)';
+    document.getElementById('banner-lockout').classList.add('visible');
+    printLog(`🔒 Short-cycle lockout started (${SC_LIMIT}s = 3 min real)`, 'log-blue');
+    showToast('🔒 Compressor locked out — short-cycle protection', 'lockout');
+
+    scTimer = setInterval(() => {
+        scRemaining--;
+        document.getElementById('sc-cd').textContent = scRemaining;
+        document.getElementById('lockout-countdown').textContent = scRemaining;
+        const pct = ((SC_LIMIT - scRemaining) / SC_LIMIT) * 100;
+        document.getElementById('sc-bar').style.width = pct+'%';
+        document.getElementById('sc-bar-label').textContent = scRemaining+'s remaining';
+        if (scRemaining <= 0) {
+            clearInterval(scTimer);
+            scLocked=false;
+            document.getElementById('sc-badge').classList.remove('active');
+            document.getElementById('sc-ready').style.display='';
+            document.getElementById('sc-status-txt').textContent='READY';
+            document.getElementById('sc-status-txt').style.color='var(--green)';
+            document.getElementById('banner-lockout').classList.remove('visible');
+            document.getElementById('sc-bar').style.width='0%';
+            document.getElementById('sc-bar-label').textContent='—';
+            printLog('🔓 Short-cycle lockout expired. Compressor ready.', 'log-blue');
+            showToast('🔓 Compressor ready', 'lockout');
+        }
+    }, 1000);
+}
+
+// ── LED / RELAY ───────────────────────────────────────────────
+let ledIsOn=false;
+function setLED(on, zone, isAlarm, isMaint) {
+    ledIsOn=on;
+    const el=document.getElementById('ds-led'), lbl=document.getElementById('led-color-state');
+    setRelayDisplay(on);
+    if (isMaint) { el.className='led-indicator maintenance'; lbl.textContent='🔧 MAINT'; lbl.style.color='var(--orange)'; return; }
+    if (isAlarm) { el.className='led-indicator alarm'; lbl.textContent='⚠ ALARM'; lbl.style.color='var(--red)'; return; }
+    if (!on)     { el.className='led-indicator'; lbl.textContent='OFF'; lbl.style.color='var(--muted)'; setFanSpeed(0,999); return; }
+    if (zone==='cold')     { el.className='led-indicator on-blue';   lbl.textContent='ON — COLD';   lbl.style.color='var(--blue)'; }
+    else if (zone==='critical'||zone==='hot') { el.className='led-indicator on-red'; lbl.textContent='ON — HOT'; lbl.style.color='var(--red)'; }
+    else                   { el.className='led-indicator on-amber';  lbl.textContent='ON — NORMAL'; lbl.style.color='var(--accent)'; }
+}
+
+// ── ZONES & HEALTH ────────────────────────────────────────────
+function getZone(t, lo, hi) {
+    return t>=hi+2?'critical': t>=hi?'hot': t<lo-1?'cold': 'normal';
+}
+function calcHealth(t, lo, hi) {
+    const mid=(lo+hi)/2, span=(hi-lo)/2;
+    return Math.max(0, Math.round(100 - Math.min(100, (Math.abs(t-mid)/(span+2))*130)));
+}
+
+// ── MODE SWITCHER ─────────────────────────────────────────────
+let currentMode='manual';
+function setMode(m) {
+    currentMode=m;
+    ['manual','auto','schedule'].forEach(id => document.getElementById('mode-'+id).classList.toggle('active',id===m));
+    document.getElementById('mode-display').textContent=m.toUpperCase();
+    const tc=document.getElementById('threshold-ctrl'), sp=document.getElementById('schedule-panel'), mb=document.getElementById('manual-btns');
+    if (m==='manual') { tc.classList.remove('visible'); sp.classList.remove('visible'); mb.style.display='block'; }
+    else if (m==='auto') { tc.classList.add('visible'); sp.classList.remove('visible'); mb.style.display='none'; }
+    else { tc.classList.add('visible'); sp.classList.add('visible'); mb.style.display='none'; }
+    printLog(`Mode → ${m.toUpperCase()}`);
+}
+// Slider wiring
+['thresh-low','thresh-high','sched-low','sched-high'].forEach(id => {
+    document.getElementById(id).addEventListener('input', function() {
+        const val=parseFloat(this.value);
+        document.getElementById(id+'-val').textContent=val.toFixed(1)+'°C';
+        if (id==='thresh-low') threshLow=val;
+        else if (id==='thresh-high') threshHigh=val;
+        else if (id==='sched-low') schedLow=val;
+        else schedHigh=val;
+    });
+});
+let threshLow=23, threshHigh=26, schedLow=21, schedHigh=24;
+
+function isInSchedWindow() {
+    const [sh,sm]=document.getElementById('sched-start').value.split(':').map(Number);
+    const [eh,em]=document.getElementById('sched-end').value.split(':').map(Number);
+    const now=new Date(), nm=now.getHours()*60+now.getMinutes();
+    const s=sh*60+sm, e=eh*60+em;
+    return s<=e ? nm>=s&&nm<e : nm>=s||nm<e;
+}
+function getThresholds() {
+    if (currentMode==='schedule'&&isInSchedWindow()) return {lo:schedLow,hi:schedHigh,night:true};
+    return {lo:threshLow,hi:threshHigh,night:false};
+}
+
+// ── THERMAL ALARM ─────────────────────────────────────────────
+let critStreak=0, alarmFired=false;
+
+// ── POWER CUT / RESTORE ───────────────────────────────────────
+let powerCutState=null;
+function simulatePowerCut() {
+    if (simState!=='DEVICE_CONNECTED') { showToast('Start the server first'); return; }
+    const state={ threshLow,threshHigh,schedLow,schedHigh,mode:currentMode,ts:Date.now() };
+    powerCutState=state;
+    try { localStorage.setItem('iot_nvram',JSON.stringify(state)); } catch(e){}
+    printLog('💥 POWER CUT — Saving state to NVRAM (localStorage)', 'log-orange');
+    printLog(`   threshLow=${state.threshLow} threshHigh=${state.threshHigh} mode=${state.mode}`, 'log-orange');
+    showToast('💥 Power cut! State saved to NVRAM.', 'maintenance');
+
+    // Force disconnect
+    simState='IDLE';
+    clearInterval(simInterval); simInterval=null;
+    clearInterval(scTimer); scLocked=false;
+    stopWatchdog();
+    document.getElementById('banner-thermal').classList.remove('visible');
+    document.getElementById('banner-maintenance').classList.remove('visible');
+    document.getElementById('banner-lockout').classList.remove('visible');
+    maintenanceFired=false; critStreak=0; alarmFired=false;
+    tsPkts=0;
+    setOffline();
+    setTimeout(() => { setLED(false,'normal',false,false); },100);
+
+    document.getElementById('btn-power-restore').disabled=false;
+    document.getElementById('btn-power-cut').disabled=true;
+}
+function simulatePowerRestore() {
+    let state=powerCutState;
+    if (!state) { try{ state=JSON.parse(localStorage.getItem('iot_nvram')); }catch(e){} }
+    if (!state) { showToast('No saved state found'); return; }
+    threshLow=state.threshLow; threshHigh=state.threshHigh;
+    schedLow=state.schedLow||schedLow; schedHigh=state.schedHigh||schedHigh;
+    // Sync sliders
+    document.getElementById('thresh-low').value=threshLow; document.getElementById('thresh-low-val').textContent=threshLow.toFixed(1)+'°C';
+    document.getElementById('thresh-high').value=threshHigh; document.getElementById('thresh-high-val').textContent=threshHigh.toFixed(1)+'°C';
+    setMode(state.mode||'manual');
+    document.getElementById('banner-power').classList.add('visible');
+    printLog(`⚡ POWER RESTORED — State recovered from NVRAM`, 'log-teal');
+    printLog(`   threshLow=${threshLow} threshHigh=${threshHigh} mode=${currentMode}`, 'log-teal');
+    showToast('⚡ State recovered from NVRAM!', 'power');
+    setTimeout(()=>document.getElementById('banner-power').classList.remove('visible'), 5000);
+    document.getElementById('btn-power-restore').disabled=true;
+    document.getElementById('btn-power-cut').disabled=false;
+}
+
+// ── MAIN SIM STATE ────────────────────────────────────────────
+let simState='IDLE', simInterval=null, tsPkts=0;
+
+function setOffline() {
+    document.getElementById('btn-init').disabled=false;
+    document.getElementById('btn-init').textContent='Initialize Server & Wait';
+    document.getElementById('btn-disconnect').disabled=true;
+    document.getElementById('btn-on').disabled=true;
+    document.getElementById('btn-off').disabled=true;
+    document.getElementById('sys-status').className='system-status';
+    document.getElementById('sys-status-text').textContent='SYSTEM OFFLINE';
+    document.getElementById('ds-status').textContent='[● OFFLINE]';
+    document.getElementById('ds-status').style.color='var(--muted)';
+    document.getElementById('ds-temp').textContent='--.-°C';
+    document.getElementById('ds-temp').className='temp-val';
+    document.getElementById('ds-temp-bar').style.width='0%';
+    document.getElementById('health-pct').textContent='—';
+    document.getElementById('health-bar').style.width='100%';
+    document.getElementById('health-bar').className='health-bar';
+    document.getElementById('zone-tag').textContent='—';
+    document.getElementById('raw-temp-val').textContent='--';
+    document.getElementById('filt-temp-val').textContent='--';
+    document.getElementById('ds-pkts').textContent='0';
+    document.getElementById('ds-cmd').textContent='NONE';
+    setLED(false,'normal',false,false);
+    setFanSpeed(0,999);
+    setRelayDisplay(false);
+    rawReadings=[]; renderMaDots([],0,100);
+}
+
+function setOnline() {
+    document.getElementById('btn-init').disabled=true;
+    document.getElementById('btn-init').textContent='Server Operating';
+    document.getElementById('btn-disconnect').disabled=false;
+    document.getElementById('btn-on').disabled=false;
+    document.getElementById('btn-off').disabled=false;
+    document.getElementById('sys-status').className='system-status online';
+    document.getElementById('sys-status-text').textContent='SYSTEM ONLINE';
+    document.getElementById('ds-status').textContent='[● ONLINE]';
+    document.getElementById('ds-status').style.color='var(--green)';
+}
+
+// ── TICK FUNCTION (core logic per reading) ───────────────────
+function processTick(rawTemp, isGlitch) {
+    const filtered = parseFloat(pushRaw(rawTemp).toFixed(1));
+    tsPkts++;
+
+    // Display
+    document.getElementById('raw-temp-val').textContent = rawTemp.toFixed(1);
+    document.getElementById('filt-temp-val').textContent = filtered.toFixed(1);
+    document.getElementById('ds-pkts').textContent = tsPkts;
+
+    // Glitch indicator
+    document.getElementById('glitch-badge').style.display = isGlitch ? '' : 'none';
+
+    const {lo,hi,night} = getThresholds();
+    const zone = getZone(filtered, lo, hi);
+    const health = calcHealth(filtered, lo, hi);
+
+    // Temp display
+    const tempEl = document.getElementById('ds-temp');
+    tempEl.textContent = filtered.toFixed(1)+'°C';
+    tempEl.className = 'temp-val ' + (zone==='cold'?'cold':zone==='hot'?'hot':zone==='critical'?'critical':'');
+
+    const w = Math.max(0, Math.min(100, ((filtered-16)/20)*100));
+    const tBar = document.getElementById('ds-temp-bar');
+    tBar.style.width = w+'%';
+    tBar.className = 'temp-bar '+(zone==='cold'?'cold':zone==='normal'?'normal':zone==='hot'?'hot':'critical');
+
+    const zoneIcons = {cold:'❄ COLD ZONE',normal:'✓ NORMAL ZONE',hot:'▲ HIGH',critical:'⚠ CRITICAL'};
+    document.getElementById('zone-tag').textContent = (night?'🌙 ':'')+zoneIcons[zone];
+
+    // Health
+    document.getElementById('health-pct').textContent = health+'%';
+    const hBar = document.getElementById('health-bar');
+    hBar.style.width = health+'%';
+    hBar.className = 'health-bar'+(health<40?' crit':health<65?' warn':'');
+
+    // MA dots
+    renderMaDots(rawReadings, lo, hi);
+
+    // Push chart (filtered + raw)
+    pushTempChart(rawTemp, filtered);
+
+    // Log (skip excessive logging for glitch)
+    if (isGlitch) {
+        printLog(`RECV ← raw=${rawTemp.toFixed(1)}°C ⚡GLITCH filtered=${filtered.toFixed(1)}°C`, 'log-warn');
+    } else {
+        printLog(`RECV ← raw=${rawTemp.toFixed(1)}°C filtered=${filtered.toFixed(1)}°C zone=${zone}${night?' [NIGHT]':''}`);
+    }
+
+    // ── CRITICAL STREAK (uses filtered) ──
+    if (!alarmFired) {
+        if (zone==='critical') {
+            critStreak++;
+            if (critStreak>=3) {
+                alarmFired=true;
+                document.getElementById('banner-thermal').classList.add('visible');
+                printLog('⚠ THERMAL ALARM — Critical temp x3!', 'log-warn');
+                showToast('⚠ THERMAL ALARM ACTIVE', 'alarm');
+                pushEvent(filtered, 'alarm');
+            }
+        } else {
+            critStreak=0;
+        }
+    } else if (zone!=='critical') {
+        alarmFired=false; critStreak=0;
+        document.getElementById('banner-thermal').classList.remove('visible');
+        printLog('Thermal alarm cleared — temp normalised');
+    }
+
+    // ── AUTO / SCHEDULE LOGIC ──
+    if (currentMode!=='manual') {
+        const wasOn = ledIsOn;
+        if (alarmFired && !maintenanceFired) {
+            // Alarm — force LED on
+            if (!wasOn) { setLED(true,zone,true,false); document.getElementById('ds-cmd').textContent='LED_ON'; document.getElementById('ds-payload').textContent='{"action":"LED_ON","reason":"alarm"}'; printLog('AUTO → LED_ON (alarm)'); }
+            if (!wdActive) startWatchdog(filtered);
+        } else if (maintenanceFired) {
+            setLED(true,zone,false,true);
+        } else if (zone==='cold') {
+            if (!wasOn && !scLocked) {
+                setLED(true,zone,false,false); setFanSpeed(filtered,lo);
+                document.getElementById('ds-cmd').textContent='LED_ON'; document.getElementById('ds-payload').textContent='{"action":"LED_ON","reason":"cold"}';
+                printLog('AUTO → LED_ON (cold)','log-blue'); pushEvent(filtered,'cold'); showToast('Auto: Heater ON — cold','lockout');
+                if (!wdActive) startWatchdog(filtered);
+            } else if (!wasOn && scLocked) { pushEvent(filtered,'lockout'); printLog('AUTO: LED_ON blocked by short-cycle','log-blue'); }
+        } else if (zone==='hot'||zone==='critical') {
+            if (!wasOn && !scLocked) {
+                setLED(true,zone,false,false); setFanSpeed(filtered,hi);
+                document.getElementById('ds-cmd').textContent='LED_ON'; document.getElementById('ds-payload').textContent=`{"action":"LED_ON","reason":"${zone}"}`;
+                printLog(`AUTO → LED_ON (${zone})`); pushEvent(filtered,'on'); showToast(`Auto: AC ON — ${zone}`);
+                if (!wdActive) startWatchdog(filtered);
+            } else if (!wasOn && scLocked) { pushEvent(filtered,'lockout'); printLog('AUTO: LED_ON blocked by short-cycle','log-blue'); }
+            else if (wasOn) { setFanSpeed(filtered,hi); }
+        } else { // normal
+            if (wasOn && !alarmFired && !maintenanceFired) {
+                setLED(false,zone,false,false); setFanSpeed(0,999);
+                document.getElementById('ds-cmd').textContent='LED_OFF'; document.getElementById('ds-payload').textContent='{"action":"LED_OFF","reason":"normal"}';
+                printLog('AUTO → LED_OFF (normal)'); pushEvent(filtered,'off'); showToast('Auto: AC OFF — normalised');
+                stopWatchdog(); startShortCycle();
+            } else if (wasOn) { setFanSpeed(filtered,hi); }
+        }
+        // Night tag
+        const tag=document.getElementById('sched-night-tag');
+        if (currentMode==='schedule'&&night) { tag.innerHTML='<span class="night-active-tag">🌙 NIGHT</span>'; }
+        else { tag.innerHTML=''; }
+    } else {
+        // Manual — still update fan speed and LED color zone
+        if (ledIsOn && !alarmFired && !maintenanceFired) {
+            setLED(true,zone,false,false); setFanSpeed(filtered,hi);
+        }
+    }
+}
+
+// ── INIT BUTTON ───────────────────────────────────────────────
+document.getElementById('btn-init').addEventListener('click', () => {
+    if (simState!=='IDLE') return;
+    simState='SERVER_WAITING';
+    document.getElementById('btn-init').disabled=true;
+    document.getElementById('btn-init').textContent='Binding socket…';
+    printLog('Controller binding 127.0.0.1:65432…');
+    printLog('Waiting for device connection…');
+    setTimeout(() => {
+        if (simState!=='SERVER_WAITING') return;
+        simState='DEVICE_CONNECTED';
+        setOnline();
+        printLog('Device connected from 127.0.0.1:58210. Handshake OK.');
+        showToast('Device Connected');
+        document.getElementById('btn-power-cut').disabled=false;
+
+        simInterval = setInterval(() => {
+            if (demoActive) return; // demo drives its own ticks
+            const base = parseFloat((Math.random()*10+20).toFixed(1));
+            const isGlitch = Math.random() < 0.06;
+            const raw = isGlitch ? parseFloat((base+20+Math.random()*10).toFixed(1)) : base;
+            processTick(raw, isGlitch);
+        }, 2000);
+    }, 1200);
+});
+
+document.getElementById('btn-disconnect').addEventListener('click', () => {
+    simState='IDLE'; clearInterval(simInterval); simInterval=null;
+    clearInterval(scTimer); scLocked=false; stopWatchdog();
+    tsPkts=0; critStreak=0; alarmFired=false; maintenanceFired=false;
+    rawReadings=[];
+    document.getElementById('banner-thermal').classList.remove('visible');
+    document.getElementById('banner-maintenance').classList.remove('visible');
+    document.getElementById('banner-lockout').classList.remove('visible');
+    document.getElementById('ds-payload').textContent='{"action":"none"}';
+    document.getElementById('ds-rtt').textContent='RTT: --ms';
+    printLog('Device disconnected. Socket closed.'); showToast('TCP Socket Terminated');
+    setOffline();
+});
+
+function sendCommandManual(act) {
+    if (simState!=='DEVICE_CONNECTED') return;
+    const rtt=Math.floor(Math.random()*50)+70;
+    document.getElementById('ds-payload').textContent=`{"action":"${act}"}`;
+    printLog(`SEND → {"action":"${act}"}`);
+    document.getElementById('ds-rtt').textContent='RTT: --ms';
+    setTimeout(() => {
+        if (simState!=='DEVICE_CONNECTED') return;
+        printLog(`RECV ← {"ack":"${act}_OK"}`);
+        document.getElementById('ds-rtt').textContent=`RTT: ${rtt}ms`;
+        document.getElementById('ds-cmd').textContent=act;
+        showToast(`ACK: ${act}_OK in ${rtt}ms`);
+        const zone=getZone(parseFloat(document.getElementById('ds-temp').textContent)||25, threshLow, threshHigh);
+        if (act==='LED_ON') { setLED(true,zone,false,false); setFanSpeed(parseFloat(document.getElementById('ds-temp').textContent)||25,threshHigh); const f=parseFloat(document.getElementById('ds-temp').textContent)||25; pushEvent(f,'on'); if(!wdActive)startWatchdog(f); }
+        else { setLED(false,zone,false,false); setFanSpeed(0,999); const f=parseFloat(document.getElementById('ds-temp').textContent)||25; pushEvent(f,'off'); stopWatchdog(); startShortCycle(); }
+    }, 80);
+}
+document.getElementById('btn-on').onclick=()=>sendCommandManual('LED_ON');
+document.getElementById('btn-off').onclick=()=>sendCommandManual('LED_OFF');
+
+// ── DEMO MODE ─────────────────────────────────────────────────
+// Each entry: [rawTemp, isGlitch, phaseLabel, phaseDesc, delayMs]
+const DEMO_SCRIPT = [
+    [23.5, false, 'PHASE 1 — NORMAL',       'System stable. All zones nominal.',                                2000],
+    [24.0, false, 'PHASE 1 — NORMAL',       'Steady-state telemetry. Health 100%.',                            2000],
+    [23.8, false, 'PHASE 1 — NORMAL',       'Moving average window filling up.',                               2000],
+    [24.3, false, 'PHASE 1 — NORMAL',       'Normal zone — AC stays off.',                                     2000],
+    [25.7, false, 'PHASE 2 — RISING',       'Temp approaching HIGH threshold.',                                2000],
+    [26.4, false, 'PHASE 2 — AC ON',        'Crossed HIGH threshold → AC ON! Fan: LOW.',                       2000],
+    [27.2, false, 'PHASE 2 — RISING',       'Fan speed escalating → MEDIUM.',                                  2000],
+    [50.0, true,  'PHASE 3 — GLITCH',       'EMI spike! Raw=50°C — moving avg absorbs it.',                   2000],
+    [27.6, false, 'PHASE 3 — GLITCH CLEAR', 'Filtered avg still accurate. No false trigger.',                  2000],
+    [28.5, false, 'PHASE 2 — HIGH',         'Fan speed → HIGH. Relay energised.',                              2000],
+    [30.1, false, 'PHASE 4 — CRITICAL×1',   '1st critical reading. Streak: 1/3.',                              2000],
+    [30.4, false, 'PHASE 4 — CRITICAL×2',   '2nd critical reading. Streak: 2/3.',                              2000],
+    [30.8, false, 'PHASE 4 — THERMAL ALARM','3rd critical! THERMAL ALARM fires! Fan: MAX.',                   2000],
+    [30.5, false, 'PHASE 5 — WATCHDOG',     'AC ON. Watchdog monitoring. Temp NOT dropping.',                  2000],
+    [30.3, false, 'PHASE 5 — WATCHDOG',     '5s elapsed. Baseline temp set. Delta near zero.',                 2000],
+    [30.4, false, 'PHASE 5 — WATCHDOG',     '8s elapsed. No cooling detected yet.',                            2000],
+    [30.2, false, 'PHASE 5 — WATCHDOG',     '11s elapsed. System suspicious — AC running, no drop.',          2000],
+    [30.3, false, 'PHASE 5 — MAINTENANCE',  '15s elapsed! Temp unchanged → MAINTENANCE ALARM fires.',         2000],
+    [22.0, false, 'PHASE 6 — RECOVERY',     'Room temp drops (door closed). AC OFF → short-cycle starts.',    2000],
+    [22.4, false, 'PHASE 6 — LOCKED',       'Short-cycle lockout active. Compressor cannot restart.',          2000],
+    [27.0, false, 'PHASE 6 — BLOCKED',      'Temp HOT again but AC BLOCKED by short-cycle!',                  2000],
+    [27.5, false, 'PHASE 6 — BLOCKED',      'Still blocked. Countdown running. Real life = 3 min.',            2000],
+    [27.3, false, 'PHASE 6 — BLOCKED',      'Lockout expiring soon… compressor almost ready.',                 2000],
+    [27.8, false, 'PHASE 7 — SC EXPIRED',   'Short-cycle expired! AC now allowed to start again.',             2000],
+    [27.5, false, 'PHASE 7 — COMPLETE',     'Demo complete. All 6 real-world cases demonstrated.',             2000],
+];
+
+let demoActive=false, demoStep=0, demoTimeout=null;
+
+async function startDemo() {
+    if (demoActive) return;
+    // Auto-init if needed
+    if (simState==='IDLE') {
+        document.getElementById('btn-init').click();
+        await new Promise(r=>setTimeout(r,1500));
+        // Set auto mode for demo
+    }
+    if (simState!=='DEVICE_CONNECTED') { showToast('Server not connected'); return; }
+
+    // Reset all alarm state for clean demo
+    critStreak=0; alarmFired=false; maintenanceFired=false;
+    document.getElementById('banner-thermal').classList.remove('visible');
+    document.getElementById('banner-maintenance').classList.remove('visible');
+    rawReadings=[];
+
+    // Set auto mode
+    setMode('auto');
+    document.getElementById('thresh-low').value=23; threshLow=23; document.getElementById('thresh-low-val').textContent='23.0°C';
+    document.getElementById('thresh-high').value=26; threshHigh=26; document.getElementById('thresh-high-val').textContent='26.0°C';
+
+    demoActive=true; demoStep=0;
+    document.getElementById('demo-bar').classList.add('active');
+    document.getElementById('btn-run-demo').textContent='▶ Running…';
+    document.getElementById('btn-run-demo').disabled=true;
+    printLog('▶ DEMO MODE STARTED — auto mode, thresholds 23–26°C', 'log-teal');
+    showToast('▶ Demo Mode Started', 'power');
+    runNextDemoStep();
+}
+
+function runNextDemoStep() {
+    if (!demoActive || demoStep >= DEMO_SCRIPT.length) { stopDemo(); return; }
+    const [rawTemp, isGlitch, phase, desc, delay] = DEMO_SCRIPT[demoStep];
+    const pct = Math.round((demoStep / DEMO_SCRIPT.length)*100);
+    document.getElementById('demo-phase-label').textContent=phase;
+    document.getElementById('demo-phase-desc').textContent=desc;
+    document.getElementById('demo-prog').style.width=pct+'%';
+    document.getElementById('demo-step-label').textContent=`${demoStep+1} / ${DEMO_SCRIPT.length}`;
+    processTick(rawTemp, isGlitch);
+    demoStep++;
+    demoTimeout=setTimeout(runNextDemoStep, delay);
+}
+
+function stopDemo() {
+    demoActive=false; clearTimeout(demoTimeout);
+    document.getElementById('demo-bar').classList.remove('active');
+    document.getElementById('btn-run-demo').textContent='▶ Run Full Demo';
+    document.getElementById('btn-run-demo').disabled=false;
+    if (demoStep >= DEMO_SCRIPT.length) {
+        showToast('✓ Demo complete — all cases shown', 'power');
+        printLog('✓ DEMO COMPLETE — all 6 real-world cases demonstrated', 'log-teal');
+    } else {
+        printLog('Demo stopped by user.', 'log-teal');
+    }
+}
+
+// ── BOOT ──────────────────────────────────────────────────────
+setOffline();
+setMode('manual');
+// Build MA dots (empty)
+renderMaDots([], 23, 26);
+printLog('System initialized. Press "Initialize Server" or "Run Full Demo" to start.', 'log-teal');
+</script>
+</body>
+</html>
