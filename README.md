@@ -60,9 +60,12 @@ The initial packet (`icmp_seq=1`) exhibited a latency of **18.7 ms**, which is s
 ## 5. Proof of Execution
 ### **A. Network Topology & Connectivity**
 The `net` and `nodes` commands verify the successful creation of the 3-host topology, followed by a successful ping test.
-> *[Drag and drop your Screenshot 1 here]*
+<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_50_53" src="https://github.com/user-attachments/assets/da9ad8e3-3a2b-405a-9c72-b2b96a8c1922" />
+<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_51_12" src="https://github.com/user-attachments/assets/f754a6fe-8b48-4f8f-ae78-1b3d0774ba8d" />
+
 
 ### **B. Controller Monitoring Output**
 The POX console confirms that the `logger.py` application is successfully parsing and logging MAC/IP headers for every transaction.
-> *[Drag and drop your Screenshot 3 here]*
+<img width="1920" height="920" alt="VirtualBox_Ubuntu 24 04 3_10_04_2026_13_51_31" src="https://github.com/user-attachments/assets/e7b89a32-0479-45a0-95a6-d9fe9b90e023" />
+
 
